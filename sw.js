@@ -3,7 +3,7 @@
 //  Pour forcer la mise à jour : incrémente APP_VERSION
 // ============================================================
 
-var APP_VERSION = "v1.0.0";
+var APP_VERSION = "v1.1.0";
 var CACHE_NAME  = "verdure-" + APP_VERSION;
 
 var ASSETS = [
