@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a2e1a">
+<title>Verdure</title>
+<link rel="manifest" href="manifest.json">
+<!-- iOS icons -->
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="apple-touch-icon-152.png">
+<link rel="apple-touch-icon" sizes="120x120" href="apple-touch-icon-120.png">
+<link rel="apple-touch-icon" sizes="76x76"   href="apple-touch-icon-76.png">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+<!-- iOS splash screen color -->
+<meta name="apple-mobile-web-app-title" content="Verdure">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+  :root {
+    --gd: #1a2e1a; --gm: #2d5a2d; --gl: #4a8c4a;
+    --gp: #c8e6c8; --gg: #f0f7f0; --cr: #faf8f3;
+    --el: #c4a882; --tx: #1a2e1a; --tm: #5a7a5a;
+    --r: 16px; --rs: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--gd); min-height: 100vh; color: var(--cr); overflow-x: hidden; }
+  .app { max-width: 480px; margin: 0 auto; min-height: 100vh; background: var(--cr); color: var(--tx); }
+
+  /* HEADER */
+  .hdr { background: var(--gd); padding: 48px 20px 20px; position: relative; overflow: hidden; }
+  .hdr::before { content:''; position:absolute; top:-60px; right:-40px; width:200px; height:200px; border-radius:50%; background:rgba(74,140,74,0.15); }
+  .hdr-row { display:flex; align-items:flex-end; justify-content:space-between; }
+  .hdr-title { font-family:'Playfair Display',serif; font-size:30px; font-weight:400; color:var(--cr); letter-spacing:-0.5px; }
+  .hdr-title em { font-style:italic; color:var(--gp); }
+  .hdr-sub { font-size:12px; color:rgba(200,230,200,0.65); margin-top:3px; font-weight:300; letter-spacing:0.4px; }
+
+  /* LANG SELECTOR */
+  .lang-sel { display:flex; gap:4px; }
+  .lang-btn { padding:5px 10px; border-radius:20px; border:1px solid rgba(200,230,200,0.3); background:transparent; color:rgba(200,230,200,0.55); font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+  .lang-btn.active { background:rgba(200,230,200,0.18); color:var(--gp); border-color:rgba(200,230,200,0.6); }
+
+  /* MAIN */
+  .main { padding: 20px; }
+
+  /* UPLOAD */
+  .upload-zone { border:2px dashed rgba(26,46,26,0.2); border-radius:var(--r); padding:28px 20px; text-align:center; cursor:pointer; background:var(--gg); position:relative; overflow:hidden; transition:all 0.2s; }
+  .upload-zone:hover { border-color:var(--gl); background:#e8f5e8; }
+  .upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .upload-icon { font-size:44px; margin-bottom:10px; display:block; }
+  .upload-title { font-family:'Playfair Display',serif; font-size:17px; color:var(--gm); margin-bottom:5px; }
+  .upload-hint { font-size:12px; color:var(--tm); font-weight:300; }
+
+  /* PREVIEW */
+  .preview-wrap { display:none; border-radius:var(--r); overflow:hidden; position:relative; background:#000; max-height:300px; }
+  .preview-wrap.active { display:block; }
+  .preview-img { width:100%; max-height:300px; object-fit:cover; display:block; }
+  .preview-change { position:absolute; bottom:10px; right:10px; background:rgba(0,0,0,0.6); color:white; border:1px solid rgba(255,255,255,0.3); padding:6px 12px; border-radius:20px; font-size:11px; font-family:'DM Sans',sans-serif; cursor:pointer; }
+
+  /* BTN */
+  .analyze-btn { display:block; width:100%; margin-top:14px; padding:15px; background:var(--gd); color:var(--cr); border:none; border-radius:var(--r); font-family:'DM Sans',sans-serif; font-size:15px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+  .analyze-btn:hover:not(:disabled) { background:var(--gm); transform:translateY(-1px); }
+  .analyze-btn:disabled { opacity:0.45; cursor:not-allowed; transform:none; }
+
+  /* LOADING */
+  .loading-bar { display:none; width:100%; height:3px; background:rgba(26,46,26,0.1); border-radius:99px; margin-top:10px; overflow:hidden; }
+  .loading-bar.active { display:block; }
+  .loading-fill { height:100%; background:var(--gl); border-radius:99px; animation:lpulse 1.4s ease-in-out infinite; }
+  @keyframes lpulse { 0%{width:10%;margin-left:0} 50%{width:40%;margin-left:30%} 100%{width:10%;margin-left:90%} }
+
+  /* RESULT */
+  .result-card { display:none; margin-top:20px; border-radius:var(--r); overflow:hidden; border:1px solid rgba(26,46,26,0.1); animation:slideUp 0.4s ease; }
+  .result-card.active { display:block; }
+  @keyframes slideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+  .result-hdr { background:var(--gd); padding:14px 18px; display:flex; align-items:center; gap:8px; }
+  .result-hdr-title { font-family:'Playfair Display',serif; font-size:16px; color:var(--cr); font-weight:400; }
+  .result-body { background:white; padding:18px; }
+  .plant-name { font-family:'Playfair Display',serif; font-size:21px; color:var(--gd); margin-bottom:3px; }
+  .plant-latin { font-style:italic; font-size:13px; color:var(--tm); font-family:'Playfair Display',serif; margin-bottom:16px; }
+  .health-row { display:flex; align-items:center; gap:8px; margin-bottom:16px; padding:10px 12px; border-radius:var(--rs); background:var(--gg); }
+  .health-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .health-dot.good{background:#4caf50} .health-dot.fair{background:#ff9800} .health-dot.poor{background:#f44336}
+  .health-text { font-size:13px; font-weight:500; }
+  .health-sub { font-size:11px; color:var(--tm); margin-left:auto; text-align:right; max-width:150px; line-height:1.4; }
+  .actions-title { font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:1px; color:var(--tm); margin-bottom:10px; }
+  .action-item { display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid rgba(26,46,26,0.06); }
+  .action-item:last-child { border-bottom:none; }
+  .action-pill { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:500; white-space:nowrap; flex-shrink:0; margin-top:1px; }
+  .action-pill.urgent{background:#fdecea;color:#c62828} .action-pill.soon{background:#fff8e1;color:#e65100}
+  .action-pill.optional{background:#e8f5e9;color:#2e7d32} .action-pill.info{background:#e3f2fd;color:#1565c0}
+  .action-text { font-size:13px; color:var(--tx); line-height:1.55; }
+  .action-text strong { font-weight:500; display:block; margin-bottom:1px; }
+  .notes-box { margin-top:14px; padding:12px 14px; background:#faf8f3; border-left:3px solid var(--el); border-radius:0 var(--rs) var(--rs) 0; font-size:12px; color:var(--tm); line-height:1.6; font-style:italic; }
+
+  /* ERROR */
+  .error-box { display:none; margin-top:14px; padding:12px 14px; background:#fdecea; border-radius:var(--rs); font-size:13px; color:#c62828; line-height:1.6; }
+  .error-box.active { display:block; }
+
+  /* HISTORY */
+  .history-section { margin-top:28px; padding-top:20px; border-top:1px solid rgba(26,46,26,0.08); }
+  .history-title { font-size:10px; font-weight:500; text-transform:uppercase; letter-spacing:1px; color:var(--tm); margin-bottom:12px; }
+  .history-list { display:flex; flex-direction:column; gap:8px; }
+  .history-item { display:flex; align-items:center; gap:10px; padding:9px 12px; background:white; border:1px solid rgba(26,46,26,0.08); border-radius:var(--rs); cursor:pointer; transition:border-color 0.15s; }
+  .history-item:hover { border-color:var(--gl); }
+  .history-info { flex:1; min-width:0; }
+  .history-plant { font-size:13px; font-weight:500; }
+  .history-date { font-size:11px; color:var(--tm); margin-top:1px; }
+  .history-arrow { color:var(--tm); font-size:16px; }
+  .bottom-pad { height:36px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hdr">
+    <div class="hdr-row">
+      <div>
+        <div class="hdr-title">Ver<em>dure</em></div>
+        <div class="hdr-sub" id="hdr-sub">Diagnostic IA pour vos plantes</div>
+      </div>
+      <div class="lang-sel">
+        <button class="lang-btn active" onclick="setLang('fr')">FR</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" onclick="setLang('hu')">HU</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept="image/*" capture="environment" onchange="handleFile(event)" />
+      <span class="upload-icon">🌿</span>
+      <div class="upload-title" id="upload-title">Photographiez votre plante</div>
+      <div class="upload-hint" id="upload-hint">Appuyez pour prendre une photo ou choisir une image</div>
+    </div>
+
+    <div class="preview-wrap" id="previewWrap">
+      <img class="preview-img" id="previewImg" src="" alt="Plant" />
+      <button class="preview-change" id="preview-change" onclick="resetImage()">✕ Changer</button>
+    </div>
+
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyze()" disabled>
+      <span id="btn-text">🔍 Analyser la plante</span>
+    </button>
+
+    <div class="loading-bar" id="loadingBar"><div class="loading-fill"></div></div>
+    <div class="error-box" id="errorBox"></div>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-hdr">
+        <span style="font-size:20px">🌱</span>
+        <span class="result-hdr-title" id="result-hdr-title">Diagnostic</span>
+      </div>
+      <div class="result-body" id="resultBody"></div>
+    </div>
+
+    <div class="history-section" id="historySection" style="display:none">
+      <div class="history-title" id="history-title">Analyses récentes</div>
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+    <div class="bottom-pad"></div>
+  </div>
+</div>
+
+<script>
+var GAS_URL = "https://script.google.com/macros/s/AKfycbwMAH3yqMVSKk-jav5Vhu7AaRCpxiZKKkyvOOtL-bE2OMIbwrdrSlFXTEgNIkwEMHWn/exec";
+
+var LANGS = {
+  fr: {
+    sub: "Diagnostic IA pour vos plantes",
+    uploadTitle: "Photographiez votre plante",
+    uploadHint: "Appuyez pour prendre une photo ou choisir une image",
+    changeBtn: "✕ Changer",
+    analyzeBtn: "🔍 Analyser la plante",
+    analyzingBtn: "⏳ Analyse en cours...",
+    diagTitle: "Diagnostic",
+    historyTitle: "Analyses récentes",
+    actionsTitle: "Soins recommandés",
+    healthLabels: { good:"Bonne santé", fair:"Attention requise", poor:"En difficulté" },
+    priorityLabels: { urgent:"Urgent", soon:"Bientôt", optional:"Conseil", info:"Info" },
+    histStatusLabels: { good:"Bonne santé", fair:"Attention", poor:"En difficulté" },
+    errorNoUrl: "URL GAS manquante.",
+    errorNoImg: "Choisissez d'abord une photo.",
+    systemPrompt: "Tu es un expert botaniste et horticulteur. Analyse la photo d'une plante et retourne UNIQUEMENT un objet JSON valide, sans texte avant ou après, sans balises markdown.\n\nStructure JSON :\n{\n  \"plantName\": \"Nom commun\",\n  \"latinName\": \"Genre espèce\",\n  \"healthStatus\": \"good|fair|poor\",\n  \"healthSummary\": \"Résumé en une phrase\",\n  \"actions\": [{\"priority\":\"urgent|soon|optional|info\",\"title\":\"Action courte\",\"detail\":\"Explication pratique\"}],\n  \"note\": \"Conseil ou anecdote botanique\"\n}\n\nGénère 3 à 5 actions concrètes. Réponds en français.",
+    userPrompt: "Analyse cette plante et donne-moi les soins à apporter."
+  },
+  en: {
+    sub: "AI plant care diagnosis",
+    uploadTitle: "Photograph your plant",
+    uploadHint: "Tap to take a photo or choose an image",
+    changeBtn: "✕ Change",
+    analyzeBtn: "🔍 Analyze plant",
+    analyzingBtn: "⏳ Analyzing...",
+    diagTitle: "Diagnosis",
+    historyTitle: "Recent analyses",
+    actionsTitle: "Recommended care",
+    healthLabels: { good:"Healthy", fair:"Needs attention", poor:"In difficulty" },
+    priorityLabels: { urgent:"Urgent", soon:"Soon", optional:"Tip", info:"Info" },
+    histStatusLabels: { good:"Healthy", fair:"Attention", poor:"In difficulty" },
+    errorNoUrl: "GAS URL missing.",
+    errorNoImg: "Please choose a photo first.",
+    systemPrompt: "You are an expert botanist and horticulturist. Analyze the plant photo and return ONLY a valid JSON object, no text before or after, no markdown.\n\nJSON structure:\n{\n  \"plantName\": \"Common name\",\n  \"latinName\": \"Genus species\",\n  \"healthStatus\": \"good|fair|poor\",\n  \"healthSummary\": \"One-sentence summary\",\n  \"actions\": [{\"priority\":\"urgent|soon|optional|info\",\"title\":\"Short action\",\"detail\":\"Practical explanation\"}],\n  \"note\": \"General tip or botanical fact\"\n}\n\nGenerate 3 to 5 concrete actions. Reply in English.",
+    userPrompt: "Analyze this plant and tell me what care it needs."
+  },
+  hu: {
+    sub: "AI növénydiagnosztika",
+    uploadTitle: "Fényképezze le a növényét",
+    uploadHint: "Koppintson fénykép készítéséhez vagy kép kiválasztásához",
+    changeBtn: "✕ Csere",
+    analyzeBtn: "🔍 Növény elemzése",
+    analyzingBtn: "⏳ Elemzés folyamatban...",
+    diagTitle: "Diagnózis",
+    historyTitle: "Korábbi elemzések",
+    actionsTitle: "Javasolt gondozás",
+    healthLabels: { good:"Egészséges", fair:"Figyelmet igényel", poor:"Nehézségben van" },
+    priorityLabels: { urgent:"Sürgős", soon:"Hamarosan", optional:"Tipp", info:"Info" },
+    histStatusLabels: { good:"Egészséges", fair:"Figyelem", poor:"Nehézségben" },
+    errorNoUrl: "Hiányzó GAS URL.",
+    errorNoImg: "Kérjük, először válasszon fényképet.",
+    systemPrompt: "Ön egy szakértő botanikus és kertész. Elemezze a növény fotóját, és CSAK egy érvényes JSON objektumot adjon vissza, sem előtte, sem utána szöveg, markdown nélkül.\n\nJSON struktúra:\n{\n  \"plantName\": \"Köznapi név\",\n  \"latinName\": \"Genus faj\",\n  \"healthStatus\": \"good|fair|poor\",\n  \"healthSummary\": \"Egymondatos összefoglaló\",\n  \"actions\": [{\"priority\":\"urgent|soon|optional|info\",\"title\":\"Rövid teendő\",\"detail\":\"Gyakorlati magyarázat\"}],\n  \"note\": \"Általános tipp vagy botanikai érdekesség\"\n}\n\n3-5 konkrét teendőt generálj. Válaszolj magyarul.",
+    userPrompt: "Elemezze ezt a növényt, és mondja meg, milyen gondozásra van szüksége."
+  }
+};
+
+var currentLang = localStorage.getItem('verdure_lang') || 'fr';
+var currentImageBase64 = null;
+var currentImageType = null;
+
+window.addEventListener('DOMContentLoaded', function() {
+  setLang(currentLang);
+  renderHistory();
+  setupDragDrop();
+});
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('verdure_lang', lang);
+  var L = LANGS[lang];
+  document.documentElement.lang = lang;
+  document.getElementById('hdr-sub').textContent = L.sub;
+  document.getElementById('upload-title').textContent = L.uploadTitle;
+  document.getElementById('upload-hint').textContent = L.uploadHint;
+  document.getElementById('preview-change').textContent = L.changeBtn;
+  document.getElementById('btn-text').textContent = L.analyzeBtn;
+  document.getElementById('result-hdr-title').textContent = L.diagTitle;
+  document.getElementById('history-title').textContent = L.historyTitle;
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.classList.toggle('active', b.textContent === lang.toUpperCase());
+  });
+  renderHistory();
+  var rc = document.getElementById('resultCard');
+  if (rc.classList.contains('active')) {
+    var stored = JSON.parse(sessionStorage.getItem('verdure_last') || 'null');
+    if (stored) renderResult(stored);
+  }
+}
+
+function setupDragDrop() {
+  var zone = document.getElementById('uploadZone');
+  zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.style.borderColor='#4a8c4a'; });
+  zone.addEventListener('dragleave', function() { zone.style.borderColor=''; });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault(); zone.style.borderColor='';
+    var f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) loadFile(f);
+  });
+}
+
+function handleFile(e) { var f = e.target.files[0]; if (f) loadFile(f); }
+
+function loadFile(file) {
+  if (file.size > 1024*1024) { compressAndLoad(file); } else { readFile(file); }
+}
+
+function compressAndLoad(file) {
+  var img = new Image();
+  var url = URL.createObjectURL(file);
+  img.onload = function() {
+    var c = document.createElement('canvas');
+    var s = Math.min(1, 1024 / Math.max(img.width, img.height));
+    c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    var d = c.toDataURL('image/jpeg', 0.82);
+    URL.revokeObjectURL(url);
+    currentImageBase64 = d.split(',')[1]; currentImageType = 'image/jpeg';
+    showPreview(d);
+  };
+  img.src = url;
+}
+
+function readFile(file) {
+  var r = new FileReader();
+  r.onload = function(e) { currentImageBase64 = e.target.result.split(',')[1]; currentImageType = file.type; showPreview(e.target.result); };
+  r.readAsDataURL(file);
+}
+
+function showPreview(dataUrl) {
+  document.getElementById('previewImg').src = dataUrl;
+  document.getElementById('uploadZone').style.display = 'none';
+  document.getElementById('previewWrap').classList.add('active');
+  document.getElementById('analyzeBtn').disabled = false;
+  document.getElementById('resultCard').classList.remove('active');
+  document.getElementById('errorBox').classList.remove('active');
+}
+
+function resetImage() {
+  currentImageBase64 = null; currentImageType = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('previewWrap').classList.remove('active');
+  document.getElementById('uploadZone').style.display = '';
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('resultCard').classList.remove('active');
+  document.getElementById('errorBox').classList.remove('active');
+}
+
+async function analyze() {
+  var L = LANGS[currentLang];
+  if (!currentImageBase64) { showError(L.errorNoImg); return; }
+  setLoading(true);
+  document.getElementById('errorBox').classList.remove('active');
+  document.getElementById('resultCard').classList.remove('active');
+  try {
+    var resp = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        image: currentImageBase64,
+        imageType: currentImageType,
+        systemPrompt: L.systemPrompt,
+        userPrompt: L.userPrompt
+      })
+    });
+    if (!resp.ok) throw new Error('Network error ' + resp.status);
+    var data = await resp.json();
+    if (data.error) throw new Error(data.error);
+    var result = data.data;
+    sessionStorage.setItem('verdure_last', JSON.stringify(result));
+    saveToHistory(result);
+    renderResult(result);
+  } catch(err) {
+    showError('Erreur : ' + err.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function renderResult(r) {
+  var L = LANGS[currentLang];
+  var actHtml = (r.actions||[]).map(function(a) {
+    return '<div class="action-item">'
+      +'<span class="action-pill '+a.priority+'">'+(L.priorityLabels[a.priority]||a.priority)+'</span>'
+      +'<div class="action-text"><strong>'+a.title+'</strong>'+a.detail+'</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('resultBody').innerHTML =
+    '<div class="plant-name">'+r.plantName+'</div>'
+    +'<div class="plant-latin">'+r.latinName+'</div>'
+    +'<div class="health-row">'
+    +'<div class="health-dot '+r.healthStatus+'"></div>'
+    +'<div class="health-text">'+(L.healthLabels[r.healthStatus]||r.healthStatus)+'</div>'
+    +'<div class="health-sub">'+r.healthSummary+'</div>'
+    +'</div>'
+    +'<div class="actions-title">'+L.actionsTitle+'</div>'
+    +actHtml
+    +(r.note?'<div class="notes-box">💡 '+r.note+'</div>':'');
+  document.getElementById('resultCard').classList.add('active');
+  document.getElementById('resultCard').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function saveToHistory(result) {
+  var history = JSON.parse(localStorage.getItem('verdure_history')||'[]');
+  history.unshift({
+    plantName: result.plantName, latinName: result.latinName,
+    healthStatus: result.healthStatus,
+    date: new Date().toLocaleDateString(currentLang === 'hu' ? 'hu-HU' : currentLang === 'en' ? 'en-GB' : 'fr-FR', {day:'numeric',month:'short',year:'numeric'}),
+    lang: currentLang,
+    result: result
+  });
+  localStorage.setItem('verdure_history', JSON.stringify(history.slice(0,10)));
+  renderHistory();
+}
+
+function renderHistory() {
+  var history = JSON.parse(localStorage.getItem('verdure_history')||'[]');
+  var section = document.getElementById('historySection');
+  var list = document.getElementById('historyList');
+  var L = LANGS[currentLang];
+  if (!history.length) { section.style.display='none'; return; }
+  section.style.display='block';
+  list.innerHTML = history.map(function(item,i) {
+    var dot = {good:'#c8e6c8',fair:'#fff3e0',poor:'#ffebee'}[item.healthStatus]||'#eee';
+    var label = L.histStatusLabels[item.healthStatus]||'';
+    return '<div class="history-item" onclick="showHistoryResult('+i+')">'
+      +'<div style="width:36px;height:36px;border-radius:7px;background:'+dot+';flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">🌿</div>'
+      +'<div class="history-info"><div class="history-plant">'+item.plantName+'</div><div class="history-date">'+item.date+' · '+label+'</div></div>'
+      +'<span class="history-arrow">›</span>'
+      +'</div>';
+  }).join('');
+}
+
+function showHistoryResult(i) {
+  var history = JSON.parse(localStorage.getItem('verdure_history')||'[]');
+  if (history[i]) { sessionStorage.setItem('verdure_last', JSON.stringify(history[i].result)); renderResult(history[i].result); }
+}
+
+function setLoading(on) {
+  var L = LANGS[currentLang];
+  document.getElementById('loadingBar').classList.toggle('active', on);
+  document.getElementById('analyzeBtn').disabled = on;
+  document.getElementById('btn-text').textContent = on ? L.analyzingBtn : L.analyzeBtn;
+}
+
+function showError(msg) {
+  var el = document.getElementById('errorBox');
+  el.textContent = msg; el.classList.add('active');
+}
+</script>
+</body>
+</html>
